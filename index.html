@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Material WebOS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
+    <script type="importmap">{ "imports": { "@material/web/": "https://esm.run/@material/web/" } }</script>
+    <script type="module">
+        import '@material/web/all.js';
+        import {styles as typescaleStyles} from '@material/web/typography/md-typescale-styles.js';
+        document.adoptedStyleSheets.push(typescaleStyles.styleSheet);
+    </script>
+    <style>
+        :root {
+            --md-sys-color-primary: #6750a4; --md-sys-color-on-primary: #fff;
+            --md-sys-color-primary-container: #eaddff; --md-sys-color-on-primary-container: #21005d;
+            --md-sys-color-surface: #fef7ff; --md-sys-color-surface-variant: #e7e0ec;
+            --md-sys-color-on-surface: #1d1b20; --md-sys-color-outline: #79747e;
+            --os-bg-url: url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop');
+            --glass-bg: rgba(255,255,255,0.75); --glass-border: 1px solid rgba(255,255,255,0.3);
+            --shadow-4: 0 4px 12px rgba(0,0,0,0.2); --radius-l: 24px; --radius-m: 16px;
+            --topbar-height: 32px; --topbar-bg: rgba(255,255,255,0.65); --topbar-text: #1d1b20;
+            --traffic-light-red: #ff5f57; --traffic-light-yellow: #febc2e; --traffic-light-green: #28c840;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --md-sys-color-primary: #d0bcff; --md-sys-color-on-primary: #381e72;
+                --md-sys-color-primary-container: #4f378b; --md-sys-color-on-primary-container: #eaddff;
+                --md-sys-color-surface: #141218; --md-sys-color-surface-variant: #49454f;
+                --md-sys-color-on-surface: #e6e1e5; --glass-bg: rgba(30,30,30,0.75);
+                --glass-border: 1px solid rgba(255,255,255,0.08); --topbar-bg: rgba(30,30,30,0.65); --topbar-text: #e6e1e5;
+            }
+        }
+        * { box-sizing: border-box; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+        input, textarea, .term-input, .notes-area { user-select: text !important; -webkit-user-select: text !important; }
+        body, html { margin:0; padding:0; width:100%; height:100%; overflow:hidden; font-family:'Roboto',sans-serif; background:var(--md-sys-color-surface); }
+        
+        #desktop { width:100%; height:100%; background:var(--os-bg-url) center/cover no-repeat; position:relative; display:flex; flex-direction:column; justify-content:space-between; padding-top:var(--topbar-height); }
+        #top-bar { position:fixed; top:0; left:0; right:0; height:var(--topbar-height); background:var(--topbar-bg); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); z-index:5000; display:flex; align-items:center; justify-content:space-between; padding:0 16px; color:var(--topbar-text); font-size:13px; font-weight:500; border-bottom:1px solid rgba(0,0,0,0.05); }
+        .topbar-left, .topbar-right { display:flex; align-items:center; gap:16px; height:100%; }
+        .topbar-center { position:absolute; left:50%; transform:translateX(-50%); font-weight:700; letter-spacing:0.5px; pointer-events:none; }
+        .tb-item { cursor:pointer; opacity:0.9; transition:opacity 0.2s; white-space:nowrap; height:100%; display:flex; align-items:center; padding:0 4px; }
+        .tb-item:hover { opacity:1; background:rgba(128,128,128,0.1); border-radius:4px; }
+        .tb-icon-group { display:flex; align-items:center; gap:6px; }
+        .tb-icon-group md-icon { font-size:16px; }
+        .traffic-lights-top { display:none; gap:8px; align-items:center; min-width:54px; height:100%; }
+        .traffic-lights-top.visible { display:flex; }
+        .tl-dot { width:12px; height:12px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.15s; opacity:0.9; flex-shrink:0; }
+        .tl-dot:hover { opacity:1; filter:brightness(1.1); }
+        .tl-dot md-icon { font-size:8px!important; width:8px!important; height:8px!important; line-height:1!important; color:rgba(0,0,0,0.55); opacity:0; transition:opacity 0.15s; display:flex; align-items:center; justify-content:center; margin:0; padding:0; }
+        .traffic-lights-top:hover .tl-dot md-icon, .traffic-lights-win:hover .tl-dot md-icon { opacity:1; }
+        .tl-close { background:var(--traffic-light-red); } .tl-minimize { background:var(--traffic-light-yellow); } .tl-maximize { background:var(--traffic-light-green); }
+        
+        #cc-overlay { position:fixed; inset:0; z-index:4999; background:rgba(0,0,0,0.2); opacity:0; pointer-events:none; transition:opacity 0.25s ease; }
+        #cc-overlay.open { opacity:1; pointer-events:auto; }
+        #control-center { position:fixed; top:calc(var(--topbar-height)+8px); right:16px; width:340px; background:var(--glass-bg); backdrop-filter:blur(30px); -webkit-backdrop-filter:blur(30px); border:var(--glass-border); border-radius:var(--radius-l); box-shadow:var(--shadow-4); z-index:5001; padding:16px; display:grid; grid-template-columns:1fr 1fr; gap:12px; opacity:0; transform:scale(0.95) translateY(-10px); transform-origin:top right; pointer-events:none; transition:all 0.25s cubic-bezier(0.2,0,0,1); }
+        #control-center.open { opacity:1; transform:scale(1) translateY(0); pointer-events:auto; }
+        .cc-block { background:var(--md-sys-color-surface); border-radius:var(--radius-m); padding:14px; display:flex; flex-direction:column; gap:10px; border:1px solid rgba(128,128,128,0.1); }
+        .cc-block.full-width { grid-column:span 2; }
+        .cc-row { display:flex; align-items:center; gap:10px; }
+        .cc-icon-circle { width:32px; height:32px; border-radius:50%; background:var(--md-sys-color-primary); color:var(--md-sys-color-on-primary); display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:background 0.2s; }
+        .cc-icon-circle.inactive { background:var(--md-sys-color-surface-variant); color:var(--md-sys-color-on-surface); }
+        .cc-icon-circle md-icon { font-size:18px; }
+        .cc-label { display:flex; flex-direction:column; }
+        .cc-label-title { font-size:13px; font-weight:600; color:var(--md-sys-color-on-surface); }
+        .cc-label-sub { font-size:11px; color:var(--md-sys-color-outline); }
+        .cc-toggle-row { display:flex; align-items:center; justify-content:space-between; cursor:pointer; padding:4px 0; }
+        .cc-toggle-row:hover .cc-label-title { color:var(--md-sys-color-primary); }
+        .cc-slider-container { display:flex; align-items:center; gap:10px; padding:4px 0; }
+        .cc-slider-container md-icon { font-size:18px; color:var(--md-sys-color-on-surface-variant); flex-shrink:0; }
+        .cc-slider-track { flex:1; height:24px; background:var(--md-sys-color-surface-variant); border-radius:12px; position:relative; overflow:hidden; cursor:pointer; }
+        .cc-slider-fill { height:100%; background:var(--md-sys-color-on-surface); border-radius:12px; transition:width 0.1s linear; opacity:0.8; }
+        .cc-actions-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+        .cc-action-btn { display:flex; flex-direction:column; align-items:center; gap:6px; cursor:pointer; padding:8px 4px; border-radius:12px; transition:background 0.15s; }
+        .cc-action-btn:hover { background:rgba(128,128,128,0.1); }
+        .cc-action-btn md-icon { font-size:22px; color:var(--md-sys-color-on-surface); }
+        .cc-action-btn span { font-size:10px; color:var(--md-sys-color-on-surface-variant); text-align:center; }
+        
+        .desktop-icons { padding:20px; display:grid; grid-template-columns:repeat(auto-fill,88px); grid-auto-rows:96px; gap:16px; align-content:start; pointer-events:none; }
+        .app-icon { pointer-events:auto; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; padding-top:8px; cursor:pointer; border-radius:var(--radius-m); transition:background 0.2s; color:white; text-shadow:0 1px 3px rgba(0,0,0,0.8); width:88px; height:96px; overflow:visible; }
+        .app-icon:hover { background:rgba(255,255,255,0.15); }
+        md-icon { font-family:'Material Symbols Rounded'!important; font-weight:normal; font-style:normal; font-size:24px; line-height:1; letter-spacing:normal; text-transform:none; display:inline-block; white-space:nowrap; word-wrap:normal; direction:ltr; -webkit-font-feature-settings:'liga'; -webkit-font-smoothing:antialiased; overflow:visible; }
+        .app-icon md-icon { font-size:40px; width:40px; height:40px; margin-bottom:8px; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.3)); flex-shrink:0; }
+        .app-icon span { font-size:12px; font-weight:500; text-align:center; line-height:1.3; max-width:100%; padding:0 4px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; text-overflow:ellipsis; }
+        
+        #taskbar-wrapper { position:absolute; bottom:16px; left:0; right:0; display:flex; justify-content:center; pointer-events:none; z-index:1000; }
+        #taskbar { pointer-events:auto; height:64px; background:var(--glass-bg); backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px); border:var(--glass-border); border-radius:32px; display:flex; align-items:center; justify-content:center; padding:0 12px; gap:4px; box-shadow:var(--shadow-4); min-width:320px; max-width:90vw; transition:all 0.3s ease; }
+        .task-item { width:48px; height:48px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.2s cubic-bezier(0.2,0,0,1); position:relative; color:var(--md-sys-color-on-surface); }
+        .task-item:hover { background:rgba(128,128,128,0.1); transform:scale(1.1); }
+        .task-item.active::after { content:''; position:absolute; bottom:2px; width:4px; height:4px; background:var(--md-sys-color-on-surface); border-radius:50%; }
+        .task-item.minimized { opacity:0.6; }
+        .start-btn-custom { width:48px; height:48px; border-radius:50%; border:none; background:transparent; cursor:pointer; display:flex; align-items:center; justify-content:center; position:relative; transition:background 0.2s; padding:0; outline:none; margin-right:8px; }
+        .start-btn-custom:hover { background:rgba(128,128,128,0.1); }
+        .hamburger-line { position:absolute; width:20px; height:2px; background:var(--md-sys-color-on-surface); border-radius:2px; transition:all 0.4s cubic-bezier(0.23,1,0.32,1); transform-origin:center; }
+        .line-top { transform:translateY(-6px); } .line-mid { transform:translateY(0); } .line-bot { transform:translateY(6px); }
+        .start-btn-custom.active .line-top { transform:translateY(-3px) rotate(30deg) scaleX(0.6); }
+        .start-btn-custom.active .line-mid { transform:translateY(4px) rotate(0deg) scaleX(0.65); }
+        .start-btn-custom.active .line-bot { transform:translateY(-3px) rotate(-30deg) scaleX(0.6); }
+        
+        .window-layer { position:absolute; top:var(--topbar-height); left:0; width:100%; height:calc(100% - var(--topbar-height) - 80px); pointer-events:none; overflow:hidden; }
+        .window { position:absolute; background:var(--md-sys-color-surface); border-radius:var(--radius-l); box-shadow:var(--shadow-4); display:flex; flex-direction:column; overflow:hidden; pointer-events:auto; min-width:300px; min-height:200px; border:var(--glass-border); opacity:0; transform:scale(0.95) translateY(10px); transition:opacity 0.25s cubic-bezier(0.2,0,0,1),transform 0.25s cubic-bezier(0.2,0,0,1),width 0.3s cubic-bezier(0.2,0,0,1),height 0.3s cubic-bezier(0.2,0,0,1),top 0.3s cubic-bezier(0.2,0,0,1),left 0.3s cubic-bezier(0.2,0,0,1),border-radius 0.3s ease; }
+        .window.visible { opacity:1; transform:scale(1) translateY(0); }
+        .window.minimized-state { opacity:0; transform:scale(0.6) translateY(400px); pointer-events:none; }
+        .window.closing-state { opacity:0; transform:scale(0.9); pointer-events:none; }
+        .win-header { height:48px; display:flex; align-items:center; padding:0 16px; background:var(--md-sys-color-surface-variant); color:var(--md-sys-color-on-surface); touch-action:none; position:relative; z-index:2; flex-shrink:0; transition:height 0.3s ease,padding 0.3s ease; }
+        .window[data-maximized="true"] .traffic-lights-win { display:none; }
+        .window[data-maximized="true"] .win-header { height:40px; padding-left:20px; }
+        .traffic-lights-win { display:flex; gap:8px; align-items:center; margin-right:16px; }
+        .traffic-lights-win .tl-dot md-icon { opacity:0; }
+        .win-title { font-weight:500; font-size:14px; display:flex; align-items:center; gap:8px; pointer-events:none; flex:1; }
+        .win-content { flex:1; overflow:auto; position:relative; background:var(--md-sys-color-surface); display:flex; flex-direction:column; min-height:0; }
+        .resize-handle { position:absolute; bottom:0; right:0; width:20px; height:20px; cursor:nwse-resize; z-index:30; touch-action:none; opacity:0; transition:opacity 0.2s; }
+        .window:hover .resize-handle, .window.resizing .resize-handle { opacity:1; }
+        .resize-handle::before { content:''; position:absolute; bottom:4px; right:4px; width:10px; height:10px; border-right:2px solid var(--md-sys-color-outline); border-bottom:2px solid var(--md-sys-color-outline); border-radius:0 0 4px 0; }
+        
+        #context-menu { position:fixed; z-index:9999; min-width:180px; background:var(--md-sys-color-surface); border:var(--glass-border); border-radius:var(--radius-m); box-shadow:var(--shadow-4); padding:8px 0; display:none; flex-direction:column; animation:ctxFadeIn 0.15s ease-out; pointer-events:auto; }
+        #context-menu.open { display:flex; }
+        @keyframes ctxFadeIn { from{opacity:0;transform:scale(0.95)} to{opacity:1;transform:scale(1)} }
+        .ctx-item { display:flex; align-items:center; gap:12px; padding:10px 16px; font-size:14px; color:var(--md-sys-color-on-surface); cursor:pointer; transition:background 0.15s; }
+        .ctx-item:hover { background:var(--md-sys-color-surface-variant); }
+        .ctx-item md-icon { font-size:20px; color:var(--md-sys-color-on-surface-variant); }
+        .ctx-divider { height:1px; background:var(--md-sys-color-outline); margin:4px 0; opacity:0.3; }
+        .long-press-ring { position:fixed; width:48px; height:48px; border:3px solid var(--md-sys-color-primary); border-radius:50%; pointer-events:none; z-index:9998; display:none; transform:translate(-50%,-50%) scale(0); }
+        .long-press-ring.animating { display:block; animation:lpRing 0.5s ease-out forwards; }
+        @keyframes lpRing { 0%{transform:translate(-50%,-50%) scale(0);opacity:1} 100%{transform:translate(-50%,-50%) scale(1);opacity:0} }
+        #start-menu { position:absolute; bottom:90px; left:50%; transform:translateX(-50%) translateY(20px); width:420px; height:540px; background:var(--glass-bg); backdrop-filter:blur(30px); -webkit-backdrop-filter:blur(30px); border-radius:var(--radius-l); box-shadow:var(--shadow-4); border:var(--glass-border); z-index:2000; display:flex; flex-direction:column; padding:24px; opacity:0; pointer-events:none; transition:all 0.3s cubic-bezier(0.2,0,0,1); }
+        #start-menu.open { opacity:1; pointer-events:auto; transform:translateX(-50%) translateY(0); }
+        .search-bar { margin-bottom:24px; flex-shrink:0; }
+        .app-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; overflow-y:auto; padding:4px; }
+        .start-item { display:flex; flex-direction:column; align-items:center; gap:8px; cursor:pointer; padding:12px 4px; border-radius:var(--radius-m); transition:background 0.2s; }
+        .start-item:hover { background:rgba(128,128,128,0.1); }
+        .start-item md-icon { font-size:32px; color:var(--md-sys-color-primary); }
+        .start-item span { font-size:12px; color:var(--md-sys-color-on-surface); text-align:center; }
+        
+        .calc-container { display:flex; flex-direction:column; height:100%; padding:12px; gap:12px; }
+        .calc-display { background:var(--md-sys-color-surface-variant); border-radius:var(--radius-m); padding:16px; font-size:clamp(24px,5vw,36px); text-align:right; display:flex; align-items:flex-end; justify-content:flex-end; min-height:60px; flex-shrink:0; color:var(--md-sys-color-on-surface); word-break:break-all; }
+        .calc-grid { display:grid; grid-template-columns:repeat(4,1fr); grid-template-rows:repeat(5,1fr); gap:8px; flex:1; min-height:0; }
+        .calc-btn { width:100%!important; height:100%!important; border-radius:50px!important; font-size:clamp(18px,3vw,24px)!important; --md-filled-button-container-height:100%; --md-outlined-button-container-height:100%; --md-tonal-button-container-height:100%; --md-filled-button-container-shape:50px; --md-outlined-button-container-shape:50px; --md-tonal-button-container-shape:50px; min-width:0!important; min-height:0!important; margin:0!important; padding:0!important; display:flex!important; align-items:center!important; justify-content:center!important; transition:border-radius 0.25s cubic-bezier(0.4,0,0.2,1),--md-filled-button-container-shape 0.25s cubic-bezier(0.4,0,0.2,1),--md-outlined-button-container-shape 0.25s cubic-bezier(0.4,0,0.2,1),--md-tonal-button-container-shape 0.25s cubic-bezier(0.4,0,0.2,1),filter 0.2s ease!important; }
+        .calc-btn:active,.calc-btn:focus-visible { border-radius:12px!important; --md-filled-button-container-shape:12px!important; --md-outlined-button-container-shape:12px!important; --md-tonal-button-container-shape:12px!important; filter:brightness(0.92); }
+        .calc-btn ::part(label) { padding:0!important; margin:0!important; display:flex; align-items:center; justify-content:center; width:100%; height:100%; }
+        .calc-btn.zero { grid-column:span 2; }
+        
+        .terminal-container { background:#1e1e1e; color:#d4d4d4; font-family:'Roboto Mono',monospace; padding:16px; height:100%; overflow-y:auto; font-size:14px; line-height:1.5; display:flex; flex-direction:column; }
+        .term-line { margin-bottom:4px; white-space:pre-wrap; word-break:break-all; }
+        .term-prompt { color:#4ec9b0; font-weight:bold; } .term-cmd { color:#dcdcaa; } .term-success { color:#6a9955; } .term-error { color:#f44747; }
+        .term-input-line { display:flex; align-items:center; margin-top:8px; }
+        .term-input { background:transparent; border:none; outline:none; color:#d4d4d4; font-family:'Roboto Mono',monospace; font-size:14px; flex:1; margin-left:8px; caret-color:#d4d4d4; }
+        
+        .files-container { display:flex; flex-direction:column; height:100%; }
+        .files-toolbar { padding:12px 16px; display:flex; align-items:center; gap:8px; background:var(--md-sys-color-surface-variant); flex-shrink:0; }
+        .files-path { flex:1; font-size:14px; font-weight:500; color:var(--md-sys-color-on-surface); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .files-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(110px,1fr)); gap:16px; padding:20px; overflow-y:auto; align-content:start; }
+        .file-item { display:flex; flex-direction:column; align-items:center; gap:12px; padding:16px 8px; border-radius:var(--radius-m); cursor:pointer; transition:background 0.2s; min-height:120px; justify-content:flex-start; }
+        .file-item:hover { background:var(--md-sys-color-surface-variant); }
+        .file-item md-icon { font-size:48px; width:48px; height:48px; flex-shrink:0; display:block; }
+        .file-item span { font-size:12px; text-align:center; word-break:break-word; line-height:1.4; max-width:100%; display:block; padding:0 4px; }
+        .file-folder md-icon { color:#ffc107; } .file-image md-icon { color:#e91e63; } .file-doc md-icon { color:#2196f3; } .file-code md-icon { color:#4caf50; }
+        
+        .photos-container { display:flex; flex-direction:column; height:100%; position:relative; }
+        .photos-toolbar { padding:8px 16px; display:flex; align-items:center; justify-content:space-between; background:var(--md-sys-color-surface-variant); flex-shrink:0; min-height:56px; }
+        .photos-toolbar h3 { margin:0; font-size:16px; font-weight:500; }
+        .photos-toolbar-actions { display:flex; gap:4px; align-items:center; }
+        .photos-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:12px; padding:12px; overflow-y:auto; align-content:start; }
+        .photo-item { aspect-ratio:1/1; overflow:hidden; border-radius:12px; cursor:pointer; position:relative; transition:transform 0.2s; background:var(--md-sys-color-surface-variant); }
+        .photo-item:hover { transform:scale(0.97); }
+        .photo-item img { width:100%; height:100%; object-fit:cover; display:block; position:absolute; inset:0; }
+        .photo-viewer { position:absolute; inset:0; background:rgba(0,0,0,0.9); z-index:100; display:none; align-items:center; justify-content:center; flex-direction:column; }
+        .photo-viewer.open { display:flex; }
+        .photo-viewer img { max-width:90%; max-height:80%; object-fit:contain; border-radius:8px; }
+        .photo-viewer-close { position:absolute; top:16px; right:16px; --md-icon-button-icon-color:white; }
+        
+        .weather-container { display:flex; flex-direction:column; height:100%; overflow-y:auto; }
+        .weather-selector { padding:16px; background:var(--md-sys-color-surface-variant); display:flex; flex-direction:column; gap:12px; flex-shrink:0; }
+        .weather-selector-row { display:flex; gap:8px; }
+        .weather-selector-row md-outlined-select { flex:1; }
+        .weather-main { padding:32px 24px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; flex:1; }
+        .weather-icon-large { font-size:96px; margin-bottom:8px; color:var(--md-sys-color-primary); }
+        .weather-temp-large { font-size:72px; font-weight:300; line-height:1; margin-bottom:4px; }
+        .weather-desc { font-size:20px; color:var(--md-sys-color-on-surface-variant); margin-bottom:24px; }
+        .weather-details { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; width:100%; max-width:400px; }
+        .weather-detail-item { display:flex; flex-direction:column; align-items:center; gap:4px; padding:12px; background:var(--md-sys-color-surface-variant); border-radius:var(--radius-m); }
+        .weather-detail-item md-icon { font-size:24px; color:var(--md-sys-color-primary); }
+        .weather-detail-label { font-size:12px; color:var(--md-sys-color-outline); }
+        .weather-detail-value { font-size:16px; font-weight:500; }
+        .weather-forecast { padding:16px 24px 24px; flex-shrink:0; }
+        .weather-forecast h4 { margin:0 0 12px 0; font-size:14px; font-weight:500; color:var(--md-sys-color-on-surface-variant); }
+        .weather-forecast-list { display:flex; gap:8px; overflow-x:auto; padding-bottom:8px; }
+        .weather-forecast-item { display:flex; flex-direction:column; align-items:center; gap:8px; min-width:72px; padding:12px 8px; background:var(--md-sys-color-surface-variant); border-radius:var(--radius-m); flex-shrink:0; }
+        .weather-forecast-day { font-size:12px; font-weight:500; }
+        .weather-forecast-icon { font-size:24px; color:var(--md-sys-color-primary); }
+        .weather-forecast-temp { font-size:14px; font-weight:500; }
+        .weather-loading { display:flex; align-items:center; justify-content:center; height:200px; color:var(--md-sys-color-outline); gap:12px; }
+        
+        /* Clock App Styles */
+        .clock-container { display:flex; flex-direction:column; height:100%; }
+        .clock-tabs { display:flex; background:var(--md-sys-color-surface-variant); flex-shrink:0; }
+        .clock-tab { flex:1; padding:12px 0; text-align:center; font-size:13px; font-weight:500; cursor:pointer; color:var(--md-sys-color-on-surface-variant); transition:all 0.2s; border-bottom:2px solid transparent; }
+        .clock-tab.active { color:var(--md-sys-color-primary); border-bottom-color:var(--md-sys-color-primary); background:rgba(103,80,164,0.08); }
+        .clock-panel { flex:1; padding:24px; display:none; flex-direction:column; align-items:center; justify-content:center; gap:24px; overflow-y:auto; }
+        .clock-panel.active { display:flex; }
+        .clock-big { font-size:64px; font-weight:300; font-variant-numeric:tabular-nums; color:var(--md-sys-color-on-surface); }
+        .clock-date { font-size:16px; color:var(--md-sys-color-on-surface-variant); }
+        .world-clock-list { width:100%; display:flex; flex-direction:column; gap:8px; }
+        .world-clock-item { display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background:var(--md-sys-color-surface-variant); border-radius:var(--radius-m); }
+        .world-clock-city { font-size:14px; font-weight:500; }
+        .world-clock-offset { font-size:12px; color:var(--md-sys-color-outline); }
+        .world-clock-time { font-size:18px; font-weight:400; font-variant-numeric:tabular-nums; }
+        .timer-display { font-size:72px; font-weight:200; font-variant-numeric:tabular-nums; }
+        .timer-controls { display:flex; gap:12px; }
+        .stopwatch-laps { width:100%; max-height:200px; overflow-y:auto; display:flex; flex-direction:column; gap:4px; }
+        .lap-item { display:flex; justify-content:space-between; padding:8px 12px; font-size:13px; font-variant-numeric:tabular-nums; border-bottom:1px solid var(--md-sys-color-outline); opacity:0.7; }
+        .alarm-list { width:100%; display:flex; flex-direction:column; gap:8px; }
+        .alarm-item { display:flex; justify-content:space-between; align-items:center; padding:16px; background:var(--md-sys-color-surface-variant); border-radius:var(--radius-m); }
+        .alarm-time { font-size:32px; font-weight:300; font-variant-numeric:tabular-nums; }
+        .alarm-label { font-size:13px; color:var(--md-sys-color-outline); }
+        
+        .settings-list { padding:16px; display:flex; flex-direction:column; gap:12px; }
+        .setting-row { display:flex; justify-content:space-between; align-items:center; padding:16px; background:var(--md-sys-color-surface-variant); border-radius:var(--radius-m); cursor:pointer; transition:background 0.2s; }
+        .setting-row:hover { background:var(--md-sys-color-primary-container); }
+        .setting-section-title { font-size:14px; font-weight:700; color:var(--md-sys-color-primary); margin:12px 0 4px 4px; }
+        .updater-drop-zone { width:100%; height:100px; border:2px dashed var(--md-sys-color-outline); border-radius:var(--radius-m); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; color:var(--md-sys-color-on-surface-variant); transition:all 0.2s; cursor:pointer; margin-top:8px; }
+        .updater-drop-zone:hover,.updater-drop-zone.dragover { border-color:var(--md-sys-color-primary); background:var(--md-sys-color-primary-container); color:var(--md-sys-color-on-primary-container); }
+        .updater-drop-zone md-icon { font-size:32px; }
+        .updater-drop-zone span { font-size:13px; font-weight:500; }
+        .update-progress-container { display:none; flex-direction:column; gap:8px; padding:16px; background:var(--md-sys-color-surface-variant); border-radius:var(--radius-m); margin-top:8px; }
+        .update-progress-container.active { display:flex; }
+        .progress-bar-track { width:100%; height:8px; background:rgba(128,128,128,0.2); border-radius:4px; overflow:hidden; }
+        .progress-bar-fill { height:100%; background:var(--md-sys-color-primary); border-radius:4px; width:0%; transition:width 0.3s ease; }
+        .progress-text { font-size:13px; color:var(--md-sys-color-on-surface-variant); display:flex; justify-content:space-between; }
+        .about-dialog-content { padding:24px; text-align:center; }
+        .about-logo { font-size:64px; color:var(--md-sys-color-primary); margin-bottom:16px; }
+        .about-title { font-size:24px; font-weight:500; margin-bottom:4px; }
+        .about-version { font-size:14px; color:var(--md-sys-color-outline); margin-bottom:24px; }
+        .about-info { text-align:left; display:flex; flex-direction:column; gap:12px; }
+        .about-row { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--md-sys-color-outline); font-size:14px; }
+        .about-row:last-child { border-bottom:none; }
+        .about-label { color:var(--md-sys-color-outline); }
+        .about-value { font-weight:500; }
+        .notes-area { width:100%; height:100%; border:none; resize:none; padding:16px; font-family:inherit; font-size:16px; background:transparent; color:var(--md-sys-color-on-surface); outline:none; }
+        
+        @media (max-width:600px) {
+            #start-menu { width:calc(100% - 32px); height:60vh; bottom:90px; }
+            .window { width:100%!important; height:calc(100% - var(--topbar-height))!important; top:0!important; left:0!important; border-radius:0; }
+            .desktop-icons { display:none; }
+            .weather-selector-row { flex-direction:column; }
+            #taskbar { min-width:280px; }
+            .resize-handle { display:none; }
+            .topbar-center { display:none; }
+            #control-center { width:calc(100% - 32px); right:16px; }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="top-bar">
+        <div class="topbar-left">
+            <div class="traffic-lights-top" id="traffic-lights-top">
+                <div class="tl-dot tl-close" id="tl-close-top">
+                    <md-icon>close</md-icon>
+                </div>
+                <div class="tl-dot tl-minimize" id="tl-minimize-top">
+                    <md-icon>remove</md-icon>
+                </div>
+                <div class="tl-dot tl-maximize" id="tl-maximize-top">
+                    <md-icon>fullscreen</md-icon>
+                </div>
+            </div>
+            <span class="tb-item" id="tb-app-name" style="font-weight:700;">Finder</span>
+            <span class="tb-item" onclick="openApp('files')">‡ö</span>
+            <span class="tb-item" onclick="openApp('notes')">‘</span>
+            <span class="tb-item" onclick="toggleStartMenu()">>:</span>
+            <span class="tb-item" onclick="openApp('terminal')">Èï</span>
+            <span class="tb-item" onclick="document.getElementById('about-dialog').showModal()">.©</span>
+        </div>
+        <div class="topbar-center" id="tb-center-title">Material WebOS</div>
+        <div class="topbar-right">
+            <div class="tb-icon-group tb-item" id="cc-wifi-trigger">
+                <md-icon id="cc-wifi-icon">wifi</md-icon>
+            </div>
+            <div class="tb-icon-group tb-item" id="cc-battery-trigger">
+                <md-icon>battery_full</md-icon><span>100%</span>
+            </div>
+            <div class="tb-icon-group tb-item" id="cc-toggle-btn">
+                <md-icon>tune</md-icon>
+            </div>
+            <div class="tb-item" id="tb-clock">12:00</div>
+        </div>
+    </div>
+
+    <div id="cc-overlay"></div>
+    <div id="control-center">
+        <div class="cc-block">
+            <div class="cc-toggle-row" id="cc-wifi-row">
+                <div class="cc-row">
+                    <div class="cc-icon-circle" id="cc-wifi-circle">
+                        <md-icon>wifi</md-icon>
+                    </div>
+                    <div class="cc-label"><span class="cc-label-title">Wi-Fi</span><span class="cc-label-sub" id="cc-wifi-status">òÞ¥</span></div>
+                </div>
+            </div>
+            <div class="cc-toggle-row" id="cc-bt-row">
+                <div class="cc-row">
+                    <div class="cc-icon-circle inactive" id="cc-bt-circle">
+                        <md-icon>bluetooth</md-icon>
+                    </div>
+                    <div class="cc-label"><span class="cc-label-title">ÝY</span><span class="cc-label-sub" id="cc-bt-status">*Þ¥</span></div>
+                </div>
+            </div>
+            <div class="cc-toggle-row" id="cc-airdrop-row">
+                <div class="cc-row">
+                    <div class="cc-icon-circle inactive" id="cc-airdrop-circle">
+                        <md-icon>share</md-icon>
+                    </div>
+                    <div class="cc-label"><span class="cc-label-title">”z•</span><span class="cc-label-sub" id="cc-airdrop-status">sí</span></div>
+                </div>
+            </div>
+        </div>
+        <div class="cc-block">
+            <div class="cc-toggle-row" id="cc-dnd-row">
+                <div class="cc-row">
+                    <div class="cc-icon-circle inactive" id="cc-dnd-circle" style="--md-sys-color-primary:#7d5260;">
+                        <md-icon>do_not_disturb_on</md-icon>
+                    </div>
+                    <div class="cc-label"><span class="cc-label-title">ÿp!</span><span class="cc-label-sub" id="cc-dnd-status">sí</span></div>
+                </div>
+            </div>
+            <div class="cc-toggle-row" id="cc-dark-row">
+                <div class="cc-row">
+                    <div class="cc-icon-circle inactive" id="cc-dark-circle">
+                        <md-icon>dark_mode</md-icon>
+                    </div>
+                    <div class="cc-label"><span class="cc-label-title">ñr!</span><span class="cc-label-sub" id="cc-dark-status">sí</span></div>
+                </div>
+            </div>
+            <div class="cc-toggle-row" id="cc-nightshift-row">
+                <div class="cc-row">
+                    <div class="cc-icon-circle inactive" id="cc-nightshift-circle" style="--md-sys-color-primary:#ff9800;">
+                        <md-icon>wb_twilight</md-icon>
+                    </div>
+                    <div class="cc-label"><span class="cc-label-title">È</span><span class="cc-label-sub" id="cc-nightshift-status">sí</span></div>
+                </div>
+            </div>
+        </div>
+        <div class="cc-block full-width">
+            <div class="cc-slider-container">
+                <md-icon>brightness_low</md-icon>
+                <div class="cc-slider-track" id="brightness-slider">
+                    <div class="cc-slider-fill" style="width:80%"></div>
+                </div>
+                <md-icon>brightness_high</md-icon>
+            </div>
+        </div>
+        <div class="cc-block full-width">
+            <div class="cc-slider-container">
+                <md-icon>volume_down</md-icon>
+                <div class="cc-slider-track" id="volume-slider">
+                    <div class="cc-slider-fill" style="width:60%"></div>
+                </div>
+                <md-icon>volume_up</md-icon>
+            </div>
+        </div>
+        <div class="cc-block full-width">
+            <div class="cc-actions-grid">
+                <div class="cc-action-btn" onclick="openApp('calculator');toggleControlCenter(false)">
+                    <md-icon>calculate</md-icon><span>¡—h</span>
+                </div>
+                <div class="cc-action-btn" onclick="openApp('notes');toggleControlCenter(false)">
+                    <md-icon>sticky_note_2</md-icon><span>ØU</span>
+                </div>
+                <div class="cc-action-btn" onclick="openApp('terminal');toggleControlCenter(false)">
+                    <md-icon>terminal</md-icon><span>Èï</span>
+                </div>
+                <div class="cc-action-btn" onclick="location.reload()">
+                    <md-icon>refresh</md-icon><span>Í/</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="desktop">
+        <div class="desktop-icons" id="desktop-icons-container"></div>
+        <div class="window-layer" id="window-layer"></div>
+        <div id="start-menu">
+            <md-filled-text-field class="search-bar" placeholder=""”(..." type="search">
+                <md-icon slot="leading-icon">search</md-icon>
+            </md-filled-text-field>
+            <div class="app-grid" id="start-app-grid"></div>
+            <div style="margin-top:auto;display:flex;align-items:center;gap:12px;padding-top:16px;border-top:1px solid var(--md-sys-color-outline);">
+                <md-icon-button>
+                    <md-icon>account_circle</md-icon>
+                </md-icon-button>
+                <span style="font-weight:500;">User</span>
+                <div style="flex:1"></div>
+                <md-icon-button onclick="location.reload()">
+                    <md-icon>power_settings_new</md-icon>
+                </md-icon-button>
+            </div>
+        </div>
+        <div id="taskbar-wrapper">
+            <div id="taskbar">
+                <button class="start-btn-custom" id="start-btn"><span class="hamburger-line line-top"></span><span class="hamburger-line line-mid"></span><span class="hamburger-line line-bot"></span></button>
+                <div id="taskbar-apps" style="display:flex;gap:4px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="context-menu">
+        <div class="ctx-item" data-action="refresh">
+            <md-icon>refresh</md-icon>7°Lb
+        </div>
+        <div class="ctx-divider"></div>
+        <div class="ctx-item" data-action="wallpaper">
+            <md-icon>wallpaper</md-icon>ôbÁ¸
+        </div>
+        <div class="ctx-item" data-action="settings">
+            <md-icon>settings</md-icon>ûß¾n
+        </div>
+        <div class="ctx-divider"></div>
+        <div class="ctx-item" data-action="about">
+            <md-icon>info</md-icon>sŽ,:
+        </div>
+    </div>
+    <div class="long-press-ring" id="lp-ring"></div>
+
+    <dialog id="about-dialog" style="border:none;border-radius:24px;padding:0;background:var(--md-sys-color-surface);box-shadow:var(--shadow-4);max-width:400px;width:90%;">
+        <div class="about-dialog-content">
+            <md-icon class="about-logo">devices</md-icon>
+            <div class="about-title">Material WebOS</div>
+            <div class="about-version" id="about-version-display">Version 3.6.0</div>
+            <div class="about-info">
+                <div class="about-row"><span class="about-label">Í\ûß</span><span class="about-value" id="about-os-display">WebOS 3.6 LTS</span></div>
+                <div class="about-row"><span class="about-label">…8H,</span><span class="about-value">Blink/WebKit 128.0</span></div>
+                <div class="about-row"><span class="about-label">UI F¶</span><span class="about-value">Material Web v1.4</span></div>
+                <div class="about-row"><span class="about-label">¨‡</span><span class="about-value" id="about-resolution">-</span></div>
+                <div class="about-row"><span class="about-label">ÐLö…X</span><span class="about-value" id="about-memory">-</span></div>
+                <div class="about-row"><span class="about-label">¸ïÁ</span><span class="about-value">MIT License</span></div>
+            </div>
+            <div style="margin-top:24px;display:flex;justify-content:center;">
+                <md-filled-button onclick="document.getElementById('about-dialog').close()">nš</md-filled-button>
+            </div>
+        </div>
+    </dialog>
+
+    <script type="module">
+        let systemVersion = "3.6.0";
+        let systemBuild = "2026.06.13";
+        
+        const apps = [
+            { id:'settings', name:'¾n', icon:'settings', color:'#607d8b' },
+            { id:'calculator', name:'¡—h', icon:'calculate', color:'#009688' },
+            { id:'notes', name:'°', icon:'sticky_note_2', color:'#ff9800' },
+            { id:'weather', name:')', icon:'wb_sunny', color:'#2196f3' },
+            { id:'browser', name:'OÈh', icon:'public', color:'#4caf50' },
+            { id:'files', name:'‡ö', icon:'folder', color:'#ffc107' },
+            { id:'terminal', name:'Èï', icon:'terminal', color:'#3f51b5' },
+            { id:'photos', name:'øŒ', icon:'photo_library', color:'#e91e63' },
+        ];
+        
+        let windowZIndex = 100, activeWindowId = null;
+        const openWindows = new Map();
+        
+        // === CONTROL CENTER ===
+        const ccPanel = document.getElementById('control-center');
+        const ccOverlay = document.getElementById('cc-overlay');
+        const ccState = { wifi:true, bluetooth:false, airdrop:false, dnd:false, darkMode:window.matchMedia('(prefers-color-scheme:dark)').matches, nightShift:false };
+        
+        function toggleControlCenter(forceState) {
+            const isOpen = forceState !== undefined ? !forceState : ccPanel.classList.contains('open');
+            if(isOpen) { ccPanel.classList.remove('open'); ccOverlay.classList.remove('open'); }
+            else {
+                const sm = document.getElementById('start-menu'), sb = document.getElementById('start-btn');
+                if(sm.classList.contains('open')) { sm.classList.remove('open'); sb.classList.remove('active'); }
+                ccPanel.classList.add('open'); ccOverlay.classList.add('open');
+            }
+        }
+        document.getElementById('cc-toggle-btn').addEventListener('click', () => toggleControlCenter());
+        document.getElementById('cc-wifi-trigger').addEventListener('click', () => toggleControlCenter());
+        document.getElementById('cc-battery-trigger').addEventListener('click', () => toggleControlCenter());
+        ccOverlay.addEventListener('click', () => toggleControlCenter(false));
+        
+        function setupCcToggle(rowId, circleId, statusId, key, onText, offText, sideEffect) {
+            const row = document.getElementById(rowId), circle = document.getElementById(circleId), status = document.getElementById(statusId);
+            const update = () => { if(ccState[key]) { circle.classList.remove('inactive'); status.textContent = onText; } else { circle.classList.add('inactive'); status.textContent = offText; } };
+            update();
+            row.addEventListener('click', () => { ccState[key] = !ccState[key]; update(); if(sideEffect) sideEffect(ccState[key]); });
+        }
+        const applyDarkMode = (v) => { const r = document.documentElement.style; if(v) { r.setProperty('--md-sys-color-surface','#141218'); r.setProperty('--md-sys-color-on-surface','#e6e1e5'); r.setProperty('--md-sys-color-surface-variant','#49454f'); r.setProperty('--glass-bg','rgba(30,30,30,0.75)'); } else { r.setProperty('--md-sys-color-surface','#fef7ff'); r.setProperty('--md-sys-color-on-surface','#1d1b20'); r.setProperty('--md-sys-color-surface-variant','#e7e0ec'); r.setProperty('--glass-bg','rgba(255,255,255,0.75)'); } };
+        setupCcToggle('cc-wifi-row','cc-wifi-circle','cc-wifi-status','wifi','òÞ¥','sí', v => document.getElementById('cc-wifi-icon').textContent = v?'wifi':'wifi_off');
+        setupCcToggle('cc-bt-row','cc-bt-circle','cc-bt-status','bluetooth','ò /','*Þ¥');
+        setupCcToggle('cc-airdrop-row','cc-airdrop-circle','cc-airdrop-status','airdrop','ÅPTûº','sí');
+        setupCcToggle('cc-dnd-row','cc-dnd-circle','cc-dnd-status','dnd','ò /','sí');
+        setupCcToggle('cc-dark-row','cc-dark-circle','cc-dark-status','darkMode','ò /','sí', applyDarkMode);
+        setupCcToggle('cc-nightshift-row','cc-nightshift-circle','cc-nightshift-status','nightShift','ò /ô0)','sí');
+        if(ccState.darkMode) applyDarkMode(true);
+        
+        function setupSlider(id) {
+            const track = document.getElementById(id), fill = track.querySelector('.cc-slider-fill'); let dragging = false;
+            const update = (x) => { const r = track.getBoundingClientRect(); fill.style.width = `${Math.max(0,Math.min(100,((x-r.left)/r.width)*100))}%`; };
+            track.addEventListener('mousedown', e => { dragging=true; update(e.clientX); });
+            track.addEventListener('touchstart', e => { dragging=true; update(e.touches[0].clientX); }, {passive:true});
+            window.addEventListener('mousemove', e => { if(dragging) update(e.clientX); });
+            window.addEventListener('touchmove', e => { if(dragging) update(e.touches[0].clientX); }, {passive:true});
+            window.addEventListener('mouseup', () => dragging=false);
+            window.addEventListener('touchend', () => dragging=false);
+        }
+        setupSlider('brightness-slider'); setupSlider('volume-slider');
+        
+        // === TOP BAR & WINDOWS ===
+        const trafficLightsTop = document.getElementById('traffic-lights-top');
+        const tbAppName = document.getElementById('tb-app-name'), tbCenterTitle = document.getElementById('tb-center-title');
+        function updateTopBar() {
+            if(activeWindowId && openWindows.has(activeWindowId.replace('win-',''))) {
+                const app = apps.find(a => a.id === activeWindowId.replace('win-',''));
+                const win = document.getElementById(activeWindowId);
+                tbAppName.textContent = app?app.name:'Window'; tbCenterTitle.textContent = app?app.name:'Material WebOS';
+                trafficLightsTop.classList.toggle('visible', win?.dataset.maximized === 'true');
+            } else { trafficLightsTop.classList.remove('visible'); tbAppName.textContent='Finder'; tbCenterTitle.textContent='Material WebOS'; }
+        }
+        document.getElementById('tl-close-top').addEventListener('click', () => { if(activeWindowId) closeWindow(activeWindowId); });
+        document.getElementById('tl-minimize-top').addEventListener('click', () => { if(activeWindowId) minimizeWindow(activeWindowId); });
+        document.getElementById('tl-maximize-top').addEventListener('click', () => { if(activeWindowId) maximizeWindow(activeWindowId); });
+        
+        const weatherDB = {"-ý":{"¬":{"¬":{temp:28,desc:"t",humidity:45,wind:"Î3§",icon:"wb_sunny",forecast:[{d:")",t:27,i:"cloud"},{d:")",t:25,i:"rainy"},{d:"hå",t:29,i:"wb_sunny"}]}},")%":{")%":{temp:27,desc:"‘",humidity:50,wind:"WÎ2§",icon:"cloud",forecast:[{d:")",t:26,i:"cloud"},{d:")",t:24,i:"rainy"},{d:"hå",t:28,i:"wb_sunny"}]}},"³":{"ó¶„":{temp:29,desc:"tl‘",humidity:40,wind:"WÎ2§",icon:"wb_sunny",forecast:[{d:")",t:28,i:"cloud"},{d:")",t:26,i:"rainy"},{d:"hå",t:30,i:"wb_sunny"}]},"q":{temp:26,desc:"4",humidity:55,wind:"Î3§",icon:"cloud",forecast:[{d:")",t:25,i:"rainy"},{d:")",t:27,i:"wb_sunny"},{d:"hå",t:26,i:"cloud"}]}},"
+w":{"
+w":{temp:26,desc:"‘",humidity:65,wind:"WÎ2§",icon:"cloud",forecast:[{d:")",t:25,i:"rainy"},{d:")",t:24,i:"rainy"},{d:"hå",t:27,i:"cloud"}]}},"":{"Þ":{temp:32,desc:"÷5è",humidity:80,wind:"WÎ2§",icon:"thunderstorm",forecast:[{d:")",t:31,i:"rainy"},{d:")",t:33,i:"wb_sunny"},{d:"hå",t:32,i:"cloud"}]},"ñ3":{temp:31,desc:"4",humidity:78,wind:"WÎ3§",icon:"cloud",forecast:[{d:")",t:30,i:"rainy"},{d:")",t:32,i:"wb_sunny"},{d:"hå",t:31,i:"cloud"}]}},"ÛÝ":{"ý":{temp:24,desc:"è",humidity:85,wind:"®Î",icon:"rainy",forecast:[{d:")",t:23,i:"rainy"},{d:")",t:25,i:"cloud"},{d:"hå",t:26,i:"wb_sunny"}]}},"V":{"fI":{temp:32,desc:"tí",humidity:55,wind:"WÎ3§",icon:"wb_sunny",forecast:[{d:")",t:33,i:"wb_sunny"},{d:")",t:31,i:"thunderstorm"},{d:"hå",t:32,i:"cloud"}]}},"Y_":{"mÞ":{temp:29,desc:"t",humidity:60,wind:"WÎ2§",icon:"wb_sunny",forecast:[{d:")",t:28,i:"cloud"},{d:")",t:27,i:"rainy"},{d:"hå",t:30,i:"wb_sunny"}]}},"_Ï":{"W¬":{temp:28,desc:"4lè",humidity:70,wind:"Î3§",icon:"cloud",forecast:[{d:")",t:26,i:"rainy"},{d:")",t:28,i:"cloud"},{d:"hå",t:29,i:"wb_sunny"}]}},"U":{"‰":{temp:30,desc:"t",humidity:35,wind:"Î2§",icon:"wb_sunny",forecast:[{d:")",t:31,i:"wb_sunny"},{d:")",t:29,i:"cloud"},{d:"hå",t:30,i:"wb_sunny"}]}},"Í†":{"Í†":{temp:35,desc:"tí",humidity:50,wind:"®Î",icon:"wb_sunny",forecast:[{d:")",t:36,i:"wb_sunny"},{d:")",t:34,i:"cloud"},{d:"hå",t:35,i:"wb_sunny"}]}},"‘W":{"":{temp:20,desc:"‘",humidity:60,wind:"WÎ2§",icon:"cloud",forecast:[{d:")",t:19,i:"rainy"},{d:")",t:21,i:"wb_sunny"},{d:"hå",t:20,i:"cloud"}]}},"wW":{"wã":{temp:34,desc:"tô‘",humidity:75,wind:"WÎ3§",icon:"wb_sunny",forecast:[{d:")",t:33,i:"thunderstorm"},{d:")",t:34,i:"wb_sunny"},{d:"hå",t:33,i:"cloud"}]}},"ð~":{"ð":{temp:31,desc:"÷5è",humidity:78,wind:"WÎ2§",icon:"thunderstorm",forecast:[{d:")",t:30,i:"rainy"},{d:")",t:32,i:"wb_sunny"},{d:"hå",t:31,i:"cloud"}]}},"™/y+L?:":{"™/":{temp:30,desc:"‘	è",humidity:82,wind:"WÎ3§",icon:"rainy",forecast:[{d:")",t:29,i:"thunderstorm"},{d:")",t:31,i:"cloud"},{d:"hå",t:30,i:"wb_sunny"}]}},"³èy+L?:":{"³è":{temp:30,desc:"‘",humidity:80,wind:"WÎ3§",icon:"cloud",forecast:[{d:")",t:29,i:"rainy"},{d:")",t:31,i:"wb_sunny"},{d:"hå",t:30,i:"cloud"}]}}},"United States":{"California":{"Los Angeles":{temp:22,desc:"Sunny",humidity:40,wind:"W 8mph",icon:"wb_sunny",forecast:[{d:"Tom",t:23,i:"wb_sunny"},{d:"Wed",t:21,i:"cloud"},{d:"Thu",t:24,i:"wb_sunny"}]},"San Francisco":{temp:18,desc:"Foggy",humidity:70,wind:"NW 12mph",icon:"foggy",forecast:[{d:"Tom",t:17,i:"cloud"},{d:"Wed",t:19,i:"wb_sunny"},{d:"Thu",t:18,i:"foggy"}]}},"New York":{"New York City":{temp:20,desc:"Cloudy",humidity:55,wind:"NE 6mph",icon:"cloud",forecast:[{d:"Tom",t:19,i:"rainy"},{d:"Wed",t:21,i:"cloud"},{d:"Thu",t:22,i:"wb_sunny"}]}}},"å,":{"q¬ý":{"q¬":{temp:25,desc:"ÇŠ",humidity:60,wind:"q 3m/s",icon:"cloud",forecast:[{d:"å",t:24,i:"rainy"},{d:"Œå",t:26,i:"wb_sunny"},{d:"åÜ",t:27,i:"wb_sunny"}]}},"'*œ":{"'*":{temp:27,desc:"tŒ",humidity:50,wind:"W 4m/s",icon:"wb_sunny",forecast:[{d:"å",t:28,i:"wb_sunny"},{d:"Œå",t:26,i:"cloud"},{d:"åÜ",t:25,i:"rainy"}]}}}};
+        
+        // === CONTEXT MENU ===
+        const ctxMenu = document.getElementById('context-menu'), lpRing = document.getElementById('lp-ring');
+        let longPressTimer = null, longPressTriggered = false;
+        document.addEventListener('contextmenu', e => { e.preventDefault(); showCtx(e.clientX, e.clientY); });
+        function showCtx(x,y) { const vw=window.innerWidth,vh=window.innerHeight; ctxMenu.style.left=`${Math.max(8,x+180>vw?vw-188:x)}px`; ctxMenu.style.top=`${Math.max(8,y+200>vh?vh-208:y)}px`; ctxMenu.classList.add('open'); }
+        function hideCtx() { ctxMenu.classList.remove('open'); }
+        document.addEventListener('click', e => { if(!ctxMenu.contains(e.target)) hideCtx(); });
+        document.addEventListener('touchstart', e => { if(!ctxMenu.contains(e.target)) hideCtx(); }, {passive:true});
+        ctxMenu.addEventListener('click', e => {
+            const item = e.target.closest('.ctx-item'); if(!item) return; hideCtx();
+            switch(item.dataset.action) {
+                case 'refresh': location.reload(); break;
+                case 'wallpaper': const wps=['https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564','https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=2564','https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?q=80&w=2564','https://images.unsplash.com/photo-1501854140884-074bf86ee91c?q=80&w=2564','https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=2564']; const cur=getComputedStyle(document.documentElement).getPropertyValue('--os-bg-url').trim(); let ni=0; wps.forEach((w,i)=>{if(cur.includes(w.substring(w.lastIndexOf('/')+1)))ni=(i+1)%wps.length;}); document.documentElement.style.setProperty('--os-bg-url',`url('${wps[ni]}')`); break;
+                case 'settings': openApp('settings'); break;
+                case 'about': document.getElementById('about-resolution').textContent=`${window.screen.width}x${window.screen.height} @${window.devicePixelRatio}x`; const mem=performance.memory?`${Math.round(performance.memory.usedJSHeapSize/1048576)} MB / ${Math.round(performance.memory.jsHeapSizeLimit/1048576)} MB`:'N/A'; document.getElementById('about-memory').textContent=mem; document.getElementById('about-dialog').showModal(); break;
+            }
+        });
+        function handleLPStart(e) {
+            if(e.target.closest('button,input,textarea,select,md-icon-button,md-filled-button,md-outlined-button,md-tonal-button,md-switch,md-filled-text-field,md-outlined-text-field,md-outlined-select,.win-btn,.calc-btn,.task-item,.start-btn-custom,.file-item,.photo-item,.app-icon,.start-item,a,.tl-dot,#control-center,#cc-overlay')) return;
+            const t=e.touches[0]; lpRing.style.left=`${t.clientX}px`; lpRing.style.top=`${t.clientY}px`; lpRing.classList.remove('animating'); void lpRing.offsetWidth; lpRing.classList.add('animating');
+            longPressTriggered=false; longPressTimer=setTimeout(()=>{longPressTriggered=true;navigator.vibrate?.(30);showCtx(t.clientX,t.clientY);},500);
+        }
+        function handleLPMove() { if(longPressTimer){clearTimeout(longPressTimer);longPressTimer=null;lpRing.classList.remove('animating');} }
+        function handleLPEnd(e) { if(longPressTimer){clearTimeout(longPressTimer);longPressTimer=null;lpRing.classList.remove('animating');} if(longPressTriggered){e.preventDefault();e.stopPropagation();} }
+        document.addEventListener('touchstart',handleLPStart,{passive:true}); document.addEventListener('touchmove',handleLPMove,{passive:true}); document.addEventListener('touchend',handleLPEnd); document.addEventListener('touchcancel',handleLPEnd);
+        
+        // === CORE OS ===
+        function init() { renderDesktopIcons(); renderStartMenu(); startClock(); updateAboutDialog();
+            const sb=document.getElementById('start-btn'); sb.addEventListener('click',toggleStartMenu);
+            document.addEventListener('click',e=>{const sm=document.getElementById('start-menu');if(sm.classList.contains('open')&&!sm.contains(e.target)&&!sb.contains(e.target))toggleStartMenu(false);});
+            updateTopBar();
+        }
+        function updateAboutDialog() { document.getElementById('about-version-display').textContent=`Version ${systemVersion} (Build ${systemBuild})`; document.getElementById('about-os-display').textContent=`WebOS ${systemVersion.split('.')[0]}.${systemVersion.split('.')[1]} LTS`; }
+        function toggleStartMenu(fs) { const m=document.getElementById('start-menu'),b=document.getElementById('start-btn'),o=fs!==undefined?!fs:m.classList.contains('open'); if(!o&&ccPanel.classList.contains('open'))toggleControlCenter(false); if(o){m.classList.remove('open');b.classList.remove('active');}else{m.classList.add('open');b.classList.add('active');} }
+        function openApp(id) { toggleStartMenu(false); toggleControlCenter(false); if(openWindows.has(id)){restoreWindow(openWindows.get(id));return;} const app=apps.find(a=>a.id===id); if(app)createWindow(app); }
+        
+        function createWindow(app) {
+            const wid=`win-${app.id}`, win=document.createElement('div'); win.className='window'; win.id=wid; win.style.zIndex=++windowZIndex;
+            const mob=window.innerWidth<=600;
+            if(!mob) { win.style.left=`${50+Math.random()*100}px`; win.style.top=`${20+Math.random()*50}px`;
+                if(app.id==='calculator'){win.style.width='320px';win.style.height='480px';}
+                else if(app.id==='terminal'){win.style.width='650px';win.style.height='420px';}
+                else if(app.id==='photos'){win.style.width='700px';win.style.height='500px';}
+                else if(app.id==='weather'){win.style.width='480px';win.style.height='620px';}
+                else if(app.id==='sys.clock.v1'||app.id==='clock'){win.style.width='400px';win.style.height='520px';}
+                else{win.style.width='600px';win.style.height='450px';}
+            }
+            win.innerHTML=`<div class="win-header" data-win-id="${wid}"><div class="traffic-lights-win"><div class="tl-dot tl-close wc"><md-icon>close</md-icon></div><div class="tl-dot tl-minimize wm"><md-icon>remove</md-icon></div><div class="tl-dot tl-maximize wx"><md-icon>fullscreen</md-icon></div></div><div class="win-title"><md-icon style="font-size:18px;color:${app.color}">${app.icon}</md-icon>${app.name}</div></div><div class="win-content">${getAppComponent(app.id)}</div>${!mob?'<div class="resize-handle"></div>':''}`;
+            const bb=(cls,fn)=>{const b=win.querySelector(cls);if(b){b.addEventListener('click',e=>{e.stopPropagation();fn(wid);});b.addEventListener('touchend',e=>{e.preventDefault();e.stopPropagation();fn(wid);});}};
+            bb('.wc',closeWindow); bb('.wm',minimizeWindow); bb('.wx',maximizeWindow);
+            setupDrag(win.querySelector('.win-header'),win); if(!mob)setupResize(win.querySelector('.resize-handle'),win);
+            win.addEventListener('mousedown',()=>focusWindow(wid)); win.addEventListener('touchstart',()=>focusWindow(wid),{passive:true});
+            document.getElementById('window-layer').appendChild(win);
+            requestAnimationFrame(()=>requestAnimationFrame(()=>win.classList.add('visible')));
+            openWindows.set(app.id,win); addTaskbarItem(app); focusWindow(wid);
+            if(app.id==='calculator')initCalculator(win);
+            if(app.id==='notes')initNotes(win);
+            if(app.id==='terminal')initTerminal(win);
+            if(app.id==='files')initFiles(win);
+            if(app.id==='photos')initPhotos(win);
+            if(app.id==='weather')initWeather(win);
+            if(app.id==='settings')initSettings(win);
+            if(app.id==='sys.clock.v1'||app.id==='clock')initClock(win);
+        }
+        
+        function getAppComponent(id) {
+            switch(id) {
+                case 'calculator': return `<div class="calc-container"><div class="calc-display" id="calc-disp">0</div><div class="calc-grid"><md-outlined-button class="calc-btn" data-val="C">C</md-outlined-button><md-outlined-button class="calc-btn" data-val="(">(</md-outlined-button><md-outlined-button class="calc-btn" data-val=")">)</md-outlined-button><md-tonal-button class="calc-btn" data-val="/">÷</md-tonal-button><md-filled-button class="calc-btn" data-val="7">7</md-filled-button><md-filled-button class="calc-btn" data-val="8">8</md-filled-button><md-filled-button class="calc-btn" data-val="9">9</md-filled-button><md-tonal-button class="calc-btn" data-val="*">×</md-tonal-button><md-filled-button class="calc-btn" data-val="4">4</md-filled-button><md-filled-button class="calc-btn" data-val="5">5</md-filled-button><md-filled-button class="calc-btn" data-val="6">6</md-filled-button><md-tonal-button class="calc-btn" data-val="-">-</md-tonal-button><md-filled-button class="calc-btn" data-val="1">1</md-filled-button><md-filled-button class="calc-btn" data-val="2">2</md-filled-button><md-filled-button class="calc-btn" data-val="3">3</md-filled-button><md-tonal-button class="calc-btn" data-val="+">+</md-tonal-button><md-filled-button class="calc-btn zero" data-val="0">0</md-filled-button><md-filled-button class="calc-btn" data-val=".">.</md-filled-button><md-filled-button class="calc-btn" data-val="=" style="--md-filled-button-container-color:var(--md-sys-color-primary);--md-filled-button-label-text-color:var(--md-sys-color-on-primary);">=</md-filled-button></div></div>`;
+                case 'terminal': return `<div class="terminal-container"><div class="term-line"><span class="term-success">Material WebOS Terminal v${systemVersion}</span></div><div class="term-line">Type 'help' to see available commands.</div><div class="term-line">&nbsp;</div><div class="term-input-line"><span class="term-prompt">user@webos:~$</span><input class="term-input" type="text" autofocus autocomplete="off" spellcheck="false"></div></div>`;
+                case 'files': return `<div class="files-container"><div class="files-toolbar"><md-icon-button class="files-back-btn" disabled><md-icon>arrow_back</md-icon></md-icon-button><div class="files-path">/home/user</div><md-icon-button><md-icon>search</md-icon></md-icon-button><md-icon-button><md-icon>more_vert</md-icon></md-icon-button></div><div class="files-grid" id="files-grid"></div></div>`;
+                case 'photos': return `<div class="photos-container"><div class="photos-toolbar"><h3>hègG</h3><div class="photos-toolbar-actions"><md-icon-button><md-icon>grid_view</md-icon></md-icon-button><md-icon-button><md-icon>slideshow</md-icon></md-icon-button></div></div><div class="photos-grid" id="photos-grid"></div><div class="photo-viewer" id="photo-viewer"><md-icon-button class="photo-viewer-close"><md-icon>close</md-icon></md-icon-button><img id="photo-viewer-img" src="" alt=""></div></div>`;
+                case 'weather': return `<div class="weather-container"><div class="weather-selector"><div class="weather-selector-row"><md-outlined-select id="weather-country" label="ý¶/0:"><md-select-option value="-ý"><div slot="headline">-ý</div></md-select-option><md-select-option value="United States"><div slot="headline">United States</div></md-select-option><md-select-option value="å,"><div slot="headline">å,</div></md-select-option></md-outlined-select><md-outlined-select id="weather-province" label="/Þ/0:" disabled><md-select-option value=""><div slot="headline">÷H	éý¶</div></md-select-option></md-outlined-select></div><div class="weather-selector-row"><md-outlined-select id="weather-city" label="/Î" disabled><md-select-option value=""><div slot="headline">÷H	éý</div></md-select-option></md-outlined-select></div></div><div id="weather-content" class="weather-main"><div class="weather-loading"><md-circular-progress indeterminate></md-circular-progress><span>÷	é0:å·Ö)</span></div></div></div>`;
+                case 'sys.clock.v1': case 'clock': return `<div class="clock-container"><div class="clock-tabs"><div class="clock-tab active" data-tab="world">LöŸ</div><div class="clock-tab" data-tab="timer">¡öh</div><div class="clock-tab" data-tab="stopwatch">Òh</div><div class="clock-tab" data-tab="alarm">ùŸ</div></div><div class="clock-panel active" data-panel="world"><div class="clock-big" id="clock-world-time">--:--</div><div class="clock-date" id="clock-world-date">----t----å</div><div class="world-clock-list" id="world-clock-list"></div></div><div class="clock-panel" data-panel="timer"><div class="timer-display" id="timer-display">00:00:00</div><div class="timer-controls"><md-filled-button id="timer-start"> Ë</md-filled-button><md-outlined-button id="timer-reset">Ín</md-outlined-button></div><div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;justify-content:center;"><md-tonal-button class="timer-preset" data-sec="180">3Ÿ</md-tonal-button><md-tonal-button class="timer-preset" data-sec="300">5Ÿ</md-tonal-button><md-tonal-button class="timer-preset" data-sec="600">10Ÿ</md-tonal-button><md-tonal-button class="timer-preset" data-sec="1500">25Ÿ</md-tonal-button></div></div><div class="clock-panel" data-panel="stopwatch"><div class="timer-display" id="sw-display">00:00.00</div><div class="timer-controls"><md-filled-button id="sw-start"> Ë</md-filled-button><md-outlined-button id="sw-lap">¡!</md-outlined-button><md-outlined-button id="sw-reset">Ín</md-outlined-button></div><div class="stopwatch-laps" id="sw-laps"></div></div><div class="clock-panel" data-panel="alarm"><div class="alarm-list" id="alarm-list"></div><md-filled-button id="alarm-add" style="margin-top:16px;"><md-icon slot="icon">add</md-icon>û ùŸ</md-filled-button></div></div>`;
+                case 'settings': return `<div class="settings-list"><h3 style="margin:0 0 8px 0;">ûß¾n</h3><div class="setting-row"><div style="display:flex;align-items:center;gap:12px;"><md-icon>wallpaper</md-icon> Â</div><md-switch selected></md-switch></div><div class="setting-row"><div style="display:flex;align-items:center;gap:12px;"><md-icon>dark_mode</md-icon> ñr!</div><md-switch id="dark-mode-switch"></md-switch></div><div class="setting-row"><div style="display:flex;align-items:center;gap:12px;"><md-icon>wifi</md-icon> Wi-Fi</div><div style="color:var(--md-sys-color-primary);font-weight:500;">òÞ¥</div></div><div class="setting-row"><div style="display:flex;align-items:center;gap:12px;"><md-icon>bluetooth</md-icon> ÝY</div><md-switch></md-switch></div><div class="setting-section-title">ûßô°</div><div class="setting-row" style="flex-direction:column;align-items:stretch;gap:8px;"><div style="display:flex;align-items:center;gap:12px;"><md-icon>inventory_2</md-icon><div style="display:flex;flex-direction:column;"><span style="font-weight:500;">žÏô° (OTA)</span><span style="font-size:11px;color:var(--md-sys-color-outline);">üe .json e</span></div></div><input type="file" id="file-incremental" accept=".json" style="display:none;"><div class="updater-drop-zone" id="zone-incremental"><md-icon>upload_file</md-icon><span>¹ûÖe JSON ‡ö</span></div><div class="update-progress-container" id="prog-incremental"><div class="progress-text"><span id="prog-inc-text">c(!Œ...</span><span id="prog-inc-pct">0%</span></div><div class="progress-bar-track"><div class="progress-bar-fill" id="prog-inc-fill"></div></div></div></div><div class="setting-row" style="flex-direction:column;align-items:stretch;gap:8px;"><div style="display:flex;align-items:center;gap:12px;"><md-icon>system_update</md-icon><div style="display:flex;flex-direction:column;"><span style="font-weight:500;">hÏG§</span><span style="font-size:11px;color:var(--md-sys-color-outline);">üeŒt .html ûß\Ï</span></div></div><input type="file" id="file-full" accept=".html" style="display:none;"><div class="updater-drop-zone" id="zone-full"><md-icon>disc_full</md-icon><span>¹ûÖe HTML ‡ö</span></div><div class="update-progress-container" id="prog-full"><div class="progress-text"><span id="prog-full-text">c(!Œ...</span><span id="prog-full-pct">0%</span></div><div class="progress-bar-track"><div class="progress-bar-fill" id="prog-full-fill"></div></div></div></div><div class="setting-row about-trigger" style="cursor:pointer;"><div style="display:flex;align-items:center;gap:12px;"><md-icon>info</md-icon> sŽ,:</div><md-icon>chevron_right</md-icon></div><div style="text-align:center;margin-top:auto;padding:20px;color:var(--md-sys-color-outline);font-size:12px;">Material WebOS v${systemVersion}<br>Build ${systemBuild}</div></div>`;
+                case 'notes': return `<textarea class="notes-area" placeholder="(d“e°..."></textarea>`;
+                case 'browser': return `<div style="display:flex;flex-direction:column;height:100%;"><div style="padding:12px;background:var(--md-sys-color-surface-variant);display:flex;gap:8px;align-items:center;"><md-outlined-text-field style="flex:1;--md-outlined-text-field-container-height:40px;" value="https://www.google.com"></md-outlined-text-field><md-filled-icon-button><md-icon>arrow_forward</md-icon></md-filled-icon-button></div><div style="flex:1;display:flex;align-items:center;justify-content:center;color:var(--md-sys-color-outline);flex-direction:column;gap:16px;"><md-icon style="font-size:64px;opacity:0.5;">public</md-icon><span>!ßOÈh…¹:ß</span></div></div>`;
+                default: return `<div style="padding:40px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:16px;"><md-icon style="font-size:64px;color:var(--md-sys-color-outline);">construction</md-icon><h3 style="margin:0;">”( Ñ-</h3></div>`;
+            }
+        }
+        
+        // Window Management
+        window.focusWindow=id=>{const w=document.getElementById(id);if(w){w.style.zIndex=++windowZIndex;activeWindowId=id;updateTaskbarActive(id);updateTopBar();}};
+        window.closeWindow=id=>{const w=document.getElementById(id);if(w){w.classList.remove('visible');w.classList.add('closing-state');setTimeout(()=>{w.remove();const aid=id.replace('win-','');openWindows.delete(aid);removeTaskbarItem(aid);if(activeWindowId===id){activeWindowId=null;updateTopBar();}},250);}};
+        window.minimizeWindow=id=>{const w=document.getElementById(id);if(w){w.classList.remove('visible');w.classList.add('minimized-state');w.dataset.minimized='true';updateTaskbarMinimize(id.replace('win-',''),true);if(activeWindowId===id){activeWindowId=null;updateTopBar();}}};
+        window.restoreWindow=w=>{w.classList.remove('minimized-state');requestAnimationFrame(()=>w.classList.add('visible'));w.dataset.minimized='false';focusWindow(w.id);updateTaskbarMinimize(w.id.replace('win-',''),false);};
+        window.maximizeWindow=id=>{const w=document.getElementById(id);if(w.dataset.maximized==='true'){w.style.top=w.dataset.prevTop;w.style.left=w.dataset.prevLeft;w.style.width=w.dataset.prevWidth;w.style.height=w.dataset.prevHeight;w.style.borderRadius='var(--radius-l)';w.dataset.maximized='false';}else{w.dataset.prevTop=w.style.top;w.dataset.prevLeft=w.style.left;w.dataset.prevWidth=w.style.width;w.dataset.prevHeight=w.style.height;w.style.top='0';w.style.left='0';w.style.width='100%';w.style.height='100%';w.style.borderRadius='0';w.dataset.maximized='true';}updateTopBar();};
+        
+        function setupDrag(handle,win) {
+            let drag=false,sx,sy,il,it;
+            const onS=e=>{if(e.target.closest('.tl-dot'))return;if(win.dataset.maximized==='true')return;if(e.type==='mousedown'&&e.button!==0)return;drag=true;const cx=e.touches?e.touches[0].clientX:e.clientX,cy=e.touches?e.touches[0].clientY:e.clientY;sx=cx;sy=cy;il=win.offsetLeft;it=win.offsetTop;focusWindow(win.id);if(e.cancelable)e.preventDefault();};
+            const onM=e=>{if(!drag)return;const cx=e.touches?e.touches[0].clientX:e.clientX,cy=e.touches?e.touches[0].clientY:e.clientY;win.style.transition='none';win.style.left=`${il+cx-sx}px`;win.style.top=`${Math.max(0,it+cy-sy)}px`;if(e.cancelable)e.preventDefault();};
+            const onE=()=>{if(drag){drag=false;win.style.transition='';}};
+            handle.addEventListener('mousedown',onS);handle.addEventListener('touchstart',onS,{passive:false});
+            window.addEventListener('mousemove',onM);window.addEventListener('touchmove',onM,{passive:false});
+            window.addEventListener('mouseup',onE);window.addEventListener('touchend',onE);
+        }
+        function setupResize(handle,win) {
+            let rs=false,sx,sy,sw,sh;
+            const onS=e=>{if(win.dataset.maximized==='true')return;rs=true;win.classList.add('resizing');const cx=e.touches?e.touches[0].clientX:e.clientX,cy=e.touches?e.touches[0].clientY:e.clientY;sx=cx;sy=cy;sw=win.offsetWidth;sh=win.offsetHeight;focusWindow(win.id);if(e.cancelable)e.preventDefault();};
+            const onM=e=>{if(!rs)return;const cx=e.touches?e.touches[0].clientX:e.clientX,cy=e.touches?e.touches[0].clientY:e.clientY;win.style.transition='none';win.style.width=`${Math.max(300,sw+cx-sx)}px`;win.style.height=`${Math.max(200,sh+cy-sy)}px`;if(e.cancelable)e.preventDefault();};
+            const onE=()=>{if(rs){rs=false;win.classList.remove('resizing');win.style.transition='';}};
+            handle.addEventListener('mousedown',onS);handle.addEventListener('touchstart',onS,{passive:false});
+            window.addEventListener('mousemove',onM);window.addEventListener('touchmove',onM,{passive:false});
+            window.addEventListener('mouseup',onE);window.addEventListener('touchend',onE);
+        }
+        
+        // Taskbar
+        function addTaskbarItem(app){const i=document.createElement('div');i.className='task-item active';i.id=`task-${app.id}`;i.innerHTML=`<md-icon>${app.icon}</md-icon>`;i.onclick=()=>{const w=openWindows.get(app.id);if(w.dataset.minimized==='true')restoreWindow(w);else if(activeWindowId===`win-${app.id}`)minimizeWindow(`win-${app.id}`);else focusWindow(`win-${app.id}`);};document.getElementById('taskbar-apps').appendChild(i);}
+        function removeTaskbarItem(id){const i=document.getElementById(`task-${id}`);if(i)i.remove();}
+        function updateTaskbarActive(wid){document.querySelectorAll('.task-item').forEach(e=>e.classList.remove('active'));const i=document.getElementById(`task-${wid.replace('win-','')}`);if(i)i.classList.add('active');}
+        function updateTaskbarMinimize(id,m){const i=document.getElementById(`task-${id}`);if(i)i.classList.toggle('minimized',m);}
+        function renderDesktopIcons(){const c=document.getElementById('desktop-icons-container');c.innerHTML='';apps.forEach(a=>{const d=document.createElement('div');d.className='app-icon';d.innerHTML=`<md-icon>${a.icon}</md-icon><span>${a.name}</span>`;d.onclick=()=>openApp(a.id);c.appendChild(d);});}
+        function renderStartMenu(){const g=document.getElementById('start-app-grid');g.innerHTML='';apps.forEach(a=>{const d=document.createElement('div');d.className='start-item';d.innerHTML=`<md-icon style="color:${a.color}">${a.icon}</md-icon><span>${a.name}</span>`;d.onclick=()=>openApp(a.id);g.appendChild(d);});}
+        function startClock(){const u=()=>{document.getElementById('tb-clock').textContent=new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'});};u();setInterval(u,1000);}
+        
+        // App Inits
+        function initCalculator(win){let expr='';const d=win.querySelector('#calc-disp');win.querySelector('.calc-grid').addEventListener('click',e=>{const b=e.target.closest('[data-val]');if(!b)return;const v=b.dataset.val;if(v==='C'){expr='';d.textContent='0';}else if(v==='='){try{expr=String(Function('"use strict";return('+expr+')')());d.textContent=expr;}catch{d.textContent='Error';expr='';}}else{expr+=v;d.textContent=expr;}});}
+        function initNotes(win){const t=win.querySelector('textarea');t.value=localStorage.getItem('webos-notes')||'';t.addEventListener('input',e=>localStorage.setItem('webos-notes',e.target.value));}
+        function initTerminal(win){
+            const c=win.querySelector('.terminal-container'),inp=win.querySelector('.term-input'),hist=[];let hi=-1;
+            c.addEventListener('click',()=>inp.focus());
+            const fs={'~':['Documents','Pictures','Downloads','notes.txt','.bashrc'],'~/Documents':['resume.pdf','project-alpha','todo.md'],'~/Pictures':['wallpaper.png','screenshot.jpg'],'~/Downloads':['installer.sh','archive.tar.gz']};
+            let cd='~';
+            const cmds={help:()=>['<span class="term-success">GNU bash, version 5.1.16(1)-release</span>','Commands:','  help clear date whoami uname pwd ls cd echo cat neofetch exit'],clear:()=>{c.querySelectorAll('.term-line').forEach(l=>l.remove());return[];},date:()=>[`<span class="term-success">${new Date()}</span>`],whoami:()=>['user'],uname:a=>a.includes('-a')?[`Linux webos ${systemVersion}-material #1 SMP x86_64 GNU/Linux`]:['Linux'],pwd:()=>[cd==='~'?'/home/user':`/home/user/${cd.substring(2)}`],ls:a=>{const t=a[0]||cd;let r=t==='.'?cd:(t.startsWith('~')?t:cd+'/'+t);if(r.endsWith('/'))r=r.slice(0,-1);const items=fs[r];if(items)return[items.map(i=>i.includes('.')?i:`<span class="term-cmd">${i}/</span>`).join('  ')];return[`<span class="term-error">ls: ${t}: No such file or directory</span>`];},cd:a=>{if(!a.length||a[0]==='~'){cd='~';return[];}if(a[0]==='..'){if(cd!=='~')cd='~';return[];}const t=cd==='~'?'~/'+a[0]:cd+'/'+a[0];if(fs[t]){cd=t;return[];}return[`<span class="term-error">cd: ${a[0]}: No such file or directory</span>`];},echo:a=>[a.join(' ')],cat:a=>{if(!a.length)return['<span class="term-error">cat: missing operand</span>'];if(a[0]==='notes.txt')return['Remember to buy milk.'];if(a[0]==='.bashrc')return['export PS1="user@webos:~$ "'];return[`<span class="term-error">cat: ${a[0]}: No such file</span>`];},neofetch:()=>['<span class="term-prompt">        /////</span>        <span class="term-success">user@webos</span>','<span class="term-prompt">       /     \\</span>       -----------',`<span class="term-prompt">      /       \\</span>      <span class="term-success">OS</span>: Material WebOS ${systemVersion}`,'<span class="term-prompt">     /________\\</span>     <span class="term-success">Kernel</span>: 6.1.0-material','<span class="term-prompt">     |        |</span>     <span class="term-success">Uptime</span>: '+Math.floor(performance.now()/1000)+'s','  <span style="color:#f44747">ˆˆˆ</span><span style="color:#ffc107">ˆˆˆ</span><span style="color:#4caf50">ˆˆˆ</span><span style="color:#2196f3">ˆˆˆ</span><span style="color:#6750a4">ˆˆˆ</span>'],exit:()=>{closeWindow(win.id);return[];}};
+            const up=()=>{const p=c.querySelector('.term-prompt');p.textContent=`user@webos:${cd==='~'?'~':cd.split('/').pop()}$`;};
+            inp.addEventListener('keydown',e=>{
+                if(e.key==='Enter'){const raw=inp.value.trim();const pt=c.querySelector('.term-prompt').textContent;addLine(`<span class="term-prompt">${pt}</span> <span class="term-cmd">${esc(raw)}</span>`,'');if(raw){hist.unshift(raw);hi=-1;const parts=raw.split(/\s+/),cmd=parts[0].toLowerCase(),args=parts.slice(1);if(cmds[cmd]){cmds[cmd](args).forEach(l=>addLine(l,''));if(cmd==='cd')up();}else addLine(`<span class="term-error">bash: ${esc(cmd)}: command not found</span>`,'');}inp.value='';c.scrollTop=c.scrollHeight;}
+                else if(e.key==='ArrowUp'){e.preventDefault();if(hi<hist.length-1){hi++;inp.value=hist[hi];}}
+                else if(e.key==='ArrowDown'){e.preventDefault();if(hi>0){hi--;inp.value=hist[hi];}else{hi=-1;inp.value='';}}
+                else if(e.key==='Tab'){e.preventDefault();const v=inp.value;const items=fs[cd]||[];const m=items.find(i=>i.startsWith(v));if(m)inp.value=m+(m.includes('.')?'':'/');}
+            });
+            function addLine(html,cls){const l=document.createElement('div');l.className='term-line '+cls;l.innerHTML=html;c.insertBefore(l,c.querySelector('.term-input-line'));}
+            function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+            setTimeout(()=>inp.focus(),300);
+        }
+        function initFiles(win){
+            const grid=win.querySelector('#files-grid'),pd=win.querySelector('.files-path'),bb=win.querySelector('.files-back-btn');
+            const fs={'/home/user':[{n:'Documents',t:'folder',i:'folder'},{n:'Pictures',t:'folder',i:'folder'},{n:'Downloads',t:'folder',i:'folder'},{n:'Music',t:'folder',i:'folder'},{n:'notes.txt',t:'doc',i:'description'},{n:'config.json',t:'code',i:'code'},{n:'readme.md',t:'doc',i:'article'},{n:'budget.xlsx',t:'doc',i:'table_chart'}],'/home/user/Documents':[{n:'Projects',t:'folder',i:'folder'},{n:'resume.pdf',t:'doc',i:'picture_as_pdf'},{n:'report.docx',t:'doc',i:'description'}],'/home/user/Pictures':[{n:'vacation.jpg',t:'image',i:'image'},{n:'screenshot.png',t:'image',i:'image'},{n:'avatar.png',t:'image',i:'image'}],'/home/user/Downloads':[{n:'installer.exe',t:'code',i:'settings_applications'},{n:'archive.zip',t:'doc',i:'folder_zip'},{n:'video.mp4',t:'image',i:'movie'}]};
+            let cp='/home/user';const ps=[];
+            function rd(p){grid.innerHTML='';pd.textContent=p;bb.disabled=ps.length===0;const items=fs[p]||[];if(!items.length){grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--md-sys-color-outline);"><md-icon style="font-size:48px;">folder_open</md-icon><div>Empty</div></div>';return;}items.forEach(f=>{const el=document.createElement('div');el.className=`file-item file-${f.t}`;el.innerHTML=`<md-icon>${f.i}</md-icon><span>${f.n}</span>`;el.onclick=()=>{if(f.t==='folder'){const np=p+'/'+f.n;if(!fs[np])fs[np]=[];ps.push(cp);cp=np;rd(cp);}};grid.appendChild(el);});}
+            bb.addEventListener('click',()=>{if(ps.length){cp=ps.pop();rd(cp);}});rd(cp);
+        }
+        function initPhotos(win){
+            const grid=win.querySelector('#photos-grid'),viewer=win.querySelector('#photo-viewer'),vimg=win.querySelector('#photo-viewer-img'),cb=win.querySelector('.photo-viewer-close');
+            Array.from({length:24},(_,i)=>({url:`https://picsum.photos/seed/webos${i+10}/400/400`,full:`https://picsum.photos/seed/webos${i+10}/1200/900`})).forEach(p=>{const el=document.createElement('div');el.className='photo-item';el.innerHTML=`<img src="${p.url}" loading="lazy">`;el.onclick=()=>{vimg.src=p.full;viewer.classList.add('open');};grid.appendChild(el);});
+            cb.addEventListener('click',()=>{viewer.classList.remove('open');vimg.src='';});
+            viewer.addEventListener('click',e=>{if(e.target===viewer){viewer.classList.remove('open');vimg.src='';}});
+        }
+        function initWeather(win){
+            const cs=win.querySelector('#weather-country'),ps=win.querySelector('#weather-province'),ci=win.querySelector('#weather-city'),ca=win.querySelector('#weather-content');
+            function pop(sel,opts,ph){sel.innerHTML='';const p=document.createElement('md-select-option');p.value='';p.innerHTML=`<div slot="headline">${ph}</div>`;sel.appendChild(p);opts.forEach(o=>{const el=document.createElement('md-select-option');el.value=o;el.innerHTML=`<div slot="headline">${o}</div>`;sel.appendChild(el);});sel.disabled=!opts.length;}
+            function show(d){ca.innerHTML=`<md-icon class="weather-icon-large">${d.icon}</md-icon><div class="weather-temp-large">${d.temp}°</div><div class="weather-desc">${d.desc}</div><div class="weather-details"><div class="weather-detail-item"><md-icon>water_drop</md-icon><span class="weather-detail-value">${d.humidity}%</span><span class="weather-detail-label">¦</span></div><div class="weather-detail-item"><md-icon>air</md-icon><span class="weather-detail-value">${d.wind}</span><span class="weather-detail-label">Î›</span></div><div class="weather-detail-item"><md-icon>thermostat</md-icon><span class="weather-detail-value">${d.temp}°C</span><span class="weather-detail-label">S</span></div></div><div class="weather-forecast"><h4>*e„¥</h4><div class="weather-forecast-list">${d.forecast.map(f=>`<div class="weather-forecast-item"><span class="weather-forecast-day">${f.d}</span><md-icon class="weather-forecast-icon">${f.i}</md-icon><span class="weather-forecast-temp">${f.t}°</span></div>`).join('')}</div></div>`;}
+            cs.addEventListener('change',()=>{const c=cs.value;pop(ps,c&&weatherDB[c]?Object.keys(weatherDB[c]):[],'	é/Þ/0:');pop(ci,[],'	é/Î');ci.disabled=true;ca.innerHTML='<div class="weather-loading"><md-circular-progress indeterminate></md-circular-progress><span>÷	éŒt0:</span></div>';});
+            ps.addEventListener('change',()=>{const c=cs.value,p=ps.value;pop(ci,(c&&p&&weatherDB[c][p])?Object.keys(weatherDB[c][p]):[],'	é/Î');ca.innerHTML='<div class="weather-loading"><md-circular-progress indeterminate></md-circular-progress><span>÷	éÎ</span></div>';});
+            ci.addEventListener('change',()=>{const c=cs.value,p=ps.value,ci2=ci.value;if(c&&p&&ci2&&weatherDB[c]?.[p]?.[ci2]){ca.innerHTML='<div class="weather-loading"><md-circular-progress indeterminate></md-circular-progress><span>c(·Ö...</span></div>';setTimeout(()=>show(weatherDB[c][p][ci2]),400);}});
+        }
+        
+        // === CLOCK APP IMPLEMENTATION ===
+        function initClock(win) {
+            const tabs = win.querySelectorAll('.clock-tab');
+            const panels = win.querySelectorAll('.clock-panel');
+            tabs.forEach(tab => tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                panels.forEach(p => p.classList.remove('active'));
+                tab.classList.add('active');
+                win.querySelector(`[data-panel="${tab.dataset.tab}"]`).classList.add('active');
+            }));
+        
+            // World Clock
+            const cities = [
+                { name: '¬', tz: 'Asia/Shanghai', offset: '+08:00' },
+                { name: '¬', tz: 'Asia/Tokyo', offset: '+09:00' },
+                { name: '&f', tz: 'Europe/London', offset: '+01:00' },
+                { name: '½¦', tz: 'America/New_York', offset: '-04:00' },
+                { name: 'Iö', tz: 'America/Los_Angeles', offset: '-07:00' },
+                { name: '‰<', tz: 'Australia/Sydney', offset: '+10:00' },
+            ];
+            const wcl = win.querySelector('#world-clock-list');
+            const wTime = win.querySelector('#clock-world-time');
+            const wDate = win.querySelector('#clock-world-date');
+            cities.forEach(city => {
+                const el = document.createElement('div'); el.className = 'world-clock-item';
+                el.innerHTML = `<div><div class="world-clock-city">${city.name}</div><div class="world-clock-offset">${city.offset}</div></div><div class="world-clock-time" data-tz="${city.tz}">--:--</div>`;
+                wcl.appendChild(el);
+            });
+            setInterval(() => {
+                const now = new Date();
+                wTime.textContent = now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                wDate.textContent = now.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
+                wcl.querySelectorAll('[data-tz]').forEach(el => {
+                    el.textContent = now.toLocaleTimeString('zh-CN', { timeZone: el.dataset.tz, hour: '2-digit', minute: '2-digit' });
+                });
+            }, 1000);
+        
+            // Timer
+            let timerInterval = null, timerRemaining = 0, timerRunning = false;
+            const timerDisp = win.querySelector('#timer-display');
+            const timerStart = win.querySelector('#timer-start');
+            const timerReset = win.querySelector('#timer-reset');
+            function fmtTimer(s) { const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60; return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`; }
+            timerStart.addEventListener('click', () => {
+                if(timerRunning) { clearInterval(timerInterval); timerRunning=false; timerStart.textContent='çí'; }
+                else { if(timerRemaining<=0) timerRemaining=300; timerRunning=true; timerStart.textContent='‚\';
+                    timerInterval=setInterval(()=>{timerRemaining--;timerDisp.textContent=fmtTimer(timerRemaining);if(timerRemaining<=0){clearInterval(timerInterval);timerRunning=false;timerStart.textContent=' Ë';navigator.vibrate?.([200,100,200]);}},1000);}
+            });
+            timerReset.addEventListener('click', () => { clearInterval(timerInterval); timerRunning=false; timerRemaining=0; timerDisp.textContent='00:00:00'; timerStart.textContent=' Ë'; });
+            win.querySelectorAll('.timer-preset').forEach(btn => btn.addEventListener('click', () => { clearInterval(timerInterval); timerRunning=false; timerRemaining=parseInt(btn.dataset.sec); timerDisp.textContent=fmtTimer(timerRemaining); timerStart.textContent=' Ë'; }));
+        
+            // Stopwatch
+            let swInterval=null, swStart=0, swElapsed=0, swRunning=false, swLapCount=0;
+            const swDisp=win.querySelector('#sw-display'), swStartBtn=win.querySelector('#sw-start'), swLapBtn=win.querySelector('#sw-lap'), swResetBtn=win.querySelector('#sw-reset'), swLaps=win.querySelector('#sw-laps');
+            function fmtSW(ms) { const m=Math.floor(ms/60000),s=Math.floor((ms%60000)/1000),cs=Math.floor((ms%1000)/10); return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}.${String(cs).padStart(2,'0')}`; }
+            swStartBtn.addEventListener('click', () => {
+                if(swRunning) { swElapsed+=Date.now()-swStart; clearInterval(swInterval); swRunning=false; swStartBtn.textContent='çí'; }
+                else { swStart=Date.now(); swRunning=true; swStartBtn.textContent='\b';
+                    swInterval=setInterval(()=>{swDisp.textContent=fmtSW(swElapsed+Date.now()-swStart);},10);}
+            });
+            swLapBtn.addEventListener('click', () => { if(!swRunning) return; swLapCount++; const ms=swElapsed+Date.now()-swStart; const el=document.createElement('div'); el.className='lap-item'; el.innerHTML=`<span>#${swLapCount}</span><span>${fmtSW(ms)}</span>`; swLaps.prepend(el); });
+            swResetBtn.addEventListener('click', () => { clearInterval(swInterval); swRunning=false; swElapsed=0; swLapCount=0; swDisp.textContent='00:00.00'; swStartBtn.textContent=' Ë'; swLaps.innerHTML=''; });
+        
+            // Alarm
+            const alarmList = win.querySelector('#alarm-list');
+            const alarms = [{time:'07:00',label:'å\åùŸ',on:true},{time:'09:00',label:'h+ùŸ',on:false}];
+            function renderAlarms() { alarmList.innerHTML=''; alarms.forEach((a,i)=>{ const el=document.createElement('div'); el.className='alarm-item'; el.innerHTML=`<div><div class="alarm-time">${a.time}</div><div class="alarm-label">${a.label}</div></div><md-switch ${a.on?'selected':''}></md-switch>`; el.querySelector('md-switch').addEventListener('change',e=>{alarms[i].on=e.target.selected;}); alarmList.appendChild(el);}); }
+            renderAlarms();
+            win.querySelector('#alarm-add').addEventListener('click', () => { alarms.push({time:'12:00',label:'°ùŸ',on:true}); renderAlarms(); });
+        }
+        
+        // === SETTINGS & SMART OTA UPDATER ===
+        function initSettings(win) {
+            win.querySelector('.about-trigger').addEventListener('click', () => {
+                document.getElementById('about-resolution').textContent=`${window.screen.width}x${window.screen.height} @${window.devicePixelRatio}x`;
+                const mem=performance.memory?`${Math.round(performance.memory.usedJSHeapSize/1048576)} MB / ${Math.round(performance.memory.jsHeapSizeLimit/1048576)} MB`:'N/A';
+                document.getElementById('about-memory').textContent=mem; document.getElementById('about-dialog').showModal();
+            });
+            const dm=win.querySelector('#dark-mode-switch');
+            if(dm){dm.selected=ccState.darkMode;dm.addEventListener('change',e=>{ccState.darkMode=e.target.selected;applyDarkMode(ccState.darkMode);const ci=document.getElementById('cc-dark-circle'),st=document.getElementById('cc-dark-status');if(ccState.darkMode){ci.classList.remove('inactive');st.textContent='ò /';}else{ci.classList.add('inactive');st.textContent='sí';}});}
+        
+            setupUpdaterZone(win,'file-incremental','zone-incremental','prog-incremental','prog-inc-fill','prog-inc-text','prog-inc-pct',handleIncrementalUpdate);
+            setupUpdaterZone(win,'file-full','zone-full','prog-full','prog-full-fill','prog-full-text','prog-full-pct',handleFullUpdate);
+        }
+        
+        function setupUpdaterZone(win,inputId,zoneId,progId,fillId,textId,pctId,handler) {
+            const input=win.querySelector(`#${inputId}`),zone=win.querySelector(`#${zoneId}`),prog=win.querySelector(`#${progId}`),fill=win.querySelector(`#${fillId}`),text=win.querySelector(`#${textId}`),pct=win.querySelector(`#${pctId}`);
+            zone.addEventListener('click',()=>input.click());
+            zone.addEventListener('dragover',e=>{e.preventDefault();zone.classList.add('dragover');});
+            zone.addEventListener('dragleave',()=>zone.classList.remove('dragover'));
+            zone.addEventListener('drop',e=>{e.preventDefault();zone.classList.remove('dragover');if(e.dataTransfer.files.length)process(e.dataTransfer.files[0]);});
+            input.addEventListener('change',()=>{if(input.files.length)process(input.files[0]);});
+            async function process(file) {
+                zone.style.display='none';prog.classList.add('active');fill.style.width='0%';pct.textContent='0%';text.textContent='c(!Œ‡ö...';
+                try { await handler(file,(p,s)=>{fill.style.width=`${p}%`;pct.textContent=`${Math.round(p)}%`;if(s)text.textContent=s;}); }
+                catch(err) { text.textContent=`ï: ${err.message}`;fill.style.background='var(--traffic-light-red)';setTimeout(()=>{zone.style.display='flex';prog.classList.remove('active');fill.style.background='';},3000); }
+            }
+        }
+        
+        /**
+         * SMART OTA PARSER - Compatible with original JSON format
+         * Handles trailing spaces in keys and RFC6902 operations array
+         */
+        function trimKeys(obj) {
+            if(Array.isArray(obj)) return obj.map(trimKeys);
+            if(obj && typeof obj === 'object') {
+                const cleaned = {};
+                for(const [k,v] of Object.entries(obj)) cleaned[k.trim()] = trimKeys(v);
+                return cleaned;
+            }
+            return typeof obj === 'string' ? obj.trim() : obj;
+        }
+        
+        function handleIncrementalUpdate(file, onProgress) {
+            return new Promise((resolve, reject) => {
+                if(!file.name.endsWith('.json')) return reject(new Error('Å/ .json e‡ö'));
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    onProgress(30, 'c(ãepn...');
+                    setTimeout(() => {
+                        try {
+                            const raw = JSON.parse(e.target.result);
+                            const patch = trimKeys(raw);
+                            onProgress(50, 'c(”(ûßØô...');
+        
+                            setTimeout(() => {
+                                // Handle flat version fields
+                                if(patch.version) systemVersion = patch.version;
+                                if(patch.patch_version) systemVersion = patch.patch_version;
+                                if(patch.build) systemBuild = patch.build;
+                                if(patch.timestamp) systemBuild = patch.timestamp;
+        
+                                // Handle RFC6902 operations array
+                                if(patch.operations && Array.isArray(patch.operations)) {
+                                    patch.operations.forEach(op => {
+                                        if(op.op === 'add' || op.op === 'replace') {
+                                            const val = op.value;
+                                            if(val && (val.app_id || val.id)) {
+                                                const appId = val.app_id || val.id;
+                                                const newApp = {
+                                                    id: appId,
+                                                    name: val.name || appId,
+                                                    icon: val.icon || val.ui_config?.icon || 'schedule',
+                                                    color: val.color || '#00bcd4',
+                                                    description: val.description || '',
+                                                    features: val.features || {},
+                                                    permissions: val.permissions || [],
+                                                    ui_config: val.ui_config || {}
+                                                };
+                                                const idx = apps.findIndex(a => a.id === appId);
+                                                if(idx >= 0) apps[idx] = { ...apps[idx], ...newApp };
+                                                else apps.push(newApp);
+                                            }
+                                        }
+                                    });
+                                }
+        
+                                // Handle flat apps array (legacy format)
+                                if(patch.apps && Array.isArray(patch.apps)) {
+                                    patch.apps.forEach(a => {
+                                        const idx = apps.findIndex(x => x.id === a.id);
+                                        if(idx >= 0) apps[idx] = { ...apps[idx], ...a };
+                                        else apps.push(a);
+                                    });
+                                }
+        
+                                if(patch.weather) Object.assign(weatherDB, patch.weather);
+        
+                                renderDesktopIcons(); renderStartMenu(); updateAboutDialog();
+                                const tw = document.getElementById('win-terminal');
+                                if(tw) { const sl=tw.querySelector('.term-success'); if(sl) sl.textContent=`Material WebOS Terminal v${systemVersion}`; }
+        
+                                onProgress(100, 'ô°Œ');
+                                setTimeout(resolve, 800);
+                            }, 800);
+                        } catch(err) { reject(new Error('JSON <àH: ' + err.message)); }
+                    }, 600);
+                };
+                reader.onerror = () => reject(new Error('‡öûÖ1%'));
+                reader.readAsText(file);
+            });
+        }
+        
+        function handleFullUpdate(file, onProgress) {
+            return new Promise((resolve, reject) => {
+                if(!file.name.endsWith('.html')) return reject(new Error('Å/ .html ûß\Ï'));
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    onProgress(20, 'c(ŒÁûß~...');
+                    setTimeout(() => {
+                        const content = e.target.result;
+                        if(!content.includes('Material WebOS') || !content.includes('<div id="desktop">')) return reject(new Error('àH„ûß\Ï‡ö'));
+                        onProgress(50, 'c(™eêX...');
+                        setTimeout(() => {
+                            onProgress(80, 'c(ŒÁŒt'...');
+                            setTimeout(() => {
+                                onProgress(100, '‰ÅŒsÍ/...');
+                                setTimeout(() => { document.open(); document.write(content); document.close(); resolve(); }, 1200);
+                            }, 1000);
+                        }, 1200);
+                    }, 800);
+                };
+                reader.onerror = () => reject(new Error('‡öûÖ1%'));
+                reader.readAsText(file);
+            });
+        }
+        
+        init();
+    </script>
+</body>
+
+</html>

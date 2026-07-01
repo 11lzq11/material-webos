@@ -6,9 +6,20 @@
     "enabled": true
   },
   "assets": {
-    "directory": "."
+    "directory": ".",
+    "content_type_overrides": {
+      ".html": "text/html; charset=utf-8"
+    }
   },
   "compatibility_flags": [
     "nodejs_compat"
-  ]
+  ],
+  "headers": {
+    "/": {
+      "Content-Type": "text/html; charset=utf-8"
+    },
+    "/*.html": {
+      "Content-Type": "text/html; charset=utf-8"
+    }
+  }
 }
